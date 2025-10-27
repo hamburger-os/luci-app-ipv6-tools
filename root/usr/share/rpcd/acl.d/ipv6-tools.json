@@ -1,0 +1,45 @@
+{
+    "access": {
+        "group": "luci-app-ipv6-tools",
+        "description": "IPv6 Tools LuCI application",
+        "read": {
+            "uci": [
+                "ipv6-tools"
+            ],
+            "file": {
+                "/usr/share/ipv6-tools/*": [ "read" ],
+                "/var/log/ipv6-tools.log": [ "read" ],
+                "/tmp/ipv6-tools-*": [ "read" ],
+                "/proc/net/tcp": [ "read" ],
+                "/proc/net/tcp6": [ "read" ],
+                "/proc/net/dev": [ "read" ],
+                "/sys/class/net/*/statistics/*": [ "read" ]
+            ],
+            "ubus": {
+                "service": [
+                    "list"
+                ]
+            },
+            "exec": {
+                "/etc/init.d/openclash": [ "status" ],
+                "/bin/cat": [ "read" ],
+                "/usr/bin/tail": [ "read" ],
+                "/usr/sbin/logread": [ "read" ]
+            }
+        },
+        "write": {
+            "uci": [
+                "ipv6-tools"
+            ],
+            "file": {
+                "/var/log/ipv6-tools.log": [ "write", "append" ],
+                "/tmp/ipv6-tools-*": [ "write" ]
+            },
+            "exec": {
+                "/etc/init.d/openclash": [ "restart", "stop" ],
+                "/etc/init.d/ipv6-tools": [ "restart", "start", "stop" ],
+                "/usr/share/ipv6-tools/ipv6-tools.sh": [ "execute" ]
+            }
+        }
+    }
+}

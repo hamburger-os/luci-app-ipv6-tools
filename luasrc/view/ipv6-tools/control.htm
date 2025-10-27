@@ -1,0 +1,191 @@
+<!-- IPv6 Tools Control Template -->
+<!-- Copyright (C) 2025 -->
+<!-- Licensed under GPL v3 -->
+
+<div class="cbi-value-field">
+    <button class="cbi-button cbi-button-action important" onclick="startOpenClash()" id="start-btn">
+        <%:启动OpenClash%>
+    </button>
+    <button class="cbi-button cbi-button-action" onclick="stopOpenClash()" id="stop-btn" style="margin-left: 10px;">
+        <%:停止OpenClash%>
+    </button>
+    <button class="cbi-button cbi-button-neutral" onclick="restartOpenClash()" id="restart-btn" style="margin-left: 10px;">
+        <%:重启OpenClash%>
+    </button>
+    <button class="cbi-button cbi-button-neutral" onclick="refreshStatus()" style="margin-left: 10px;">
+        <%:刷新状态%>
+    </button>
+</div>
+
+<div id="operation-status" style="margin-top: 10px; font-weight: bold;"></div>
+
+<script type="text/javascript">
+    // 启动OpenClash
+    function startOpenClash() {
+        var btn = document.getElementById('start-btn');
+        var statusDiv = document.getElementById('operation-status');
+
+        btn.disabled = true;
+        btn.innerHTML = '<%:启动中...%>';
+        statusDiv.innerHTML = '<span style="color: blue;"><%:正在启动OpenClash，请稍候...</span></span>';
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '<%=luci.dispatcher.build_url("admin/services/ipv6-tools/api/start")%>', true);
+
+        xhr.onload = function() {
+            btn.disabled = false;
+            btn.innerHTML = '<%:启动OpenClash%>';
+
+            if (xhr.status === 200) {
+                var response = JSON.parse(xhr.responseText);
+                if (response.success) {
+                    statusDiv.innerHTML = '<span style="color: green;">✓ ' + response.message + '</span>';
+                    setTimeout(refreshStatus, 1000);
+                } else {
+                    statusDiv.innerHTML = '<span style="color: red;">✗ ' + response.message + '</span>';
+                }
+            } else {
+                statusDiv.innerHTML = '<span style="color: red;"><%:操作失败%></span>';
+            }
+
+            // 3秒后清除状态信息
+            setTimeout(function() {
+                statusDiv.innerHTML = '';
+            }, 3000);
+        };
+
+        xhr.onerror = function() {
+            btn.disabled = false;
+            btn.innerHTML = '<%:启动OpenClash%>';
+            statusDiv.innerHTML = '<span style="color: red;"><%:网络错误%></span>';
+        };
+
+        xhr.send();
+    }
+
+    // 停止OpenClash
+    function stopOpenClash() {
+        var btn = document.getElementById('stop-btn');
+        var statusDiv = document.getElementById('operation-status');
+
+        btn.disabled = true;
+        btn.innerHTML = '<%:停止中...%>';
+        statusDiv.innerHTML = '<span style="color: blue;"><%:正在停止OpenClash，请稍候...</span></span>';
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '<%=luci.dispatcher.build_url("admin/services/ipv6-tools/api/stop")%>', true);
+
+        xhr.onload = function() {
+            btn.disabled = false;
+            btn.innerHTML = '<%:停止OpenClash%>';
+
+            if (xhr.status === 200) {
+                var response = JSON.parse(xhr.responseText);
+                if (response.success) {
+                    statusDiv.innerHTML = '<span style="color: green;">✓ ' + response.message + '</span>';
+                    setTimeout(refreshStatus, 1000);
+                } else {
+                    statusDiv.innerHTML = '<span style="color: red;">✗ ' + response.message + '</span>';
+                }
+            } else {
+                statusDiv.innerHTML = '<span style="color: red;"><%:操作失败%></span>';
+            }
+
+            // 3秒后清除状态信息
+            setTimeout(function() {
+                statusDiv.innerHTML = '';
+            }, 3000);
+        };
+
+        xhr.onerror = function() {
+            btn.disabled = false;
+            btn.innerHTML = '<%:停止OpenClash%>';
+            statusDiv.innerHTML = '<span style="color: red;"><%:网络错误%></span>';
+        };
+
+        xhr.send();
+    }
+
+    // 重启OpenClash
+    function restartOpenClash() {
+        var btn = document.getElementById('restart-btn');
+        var statusDiv = document.getElementById('operation-status');
+
+        btn.disabled = true;
+        btn.innerHTML = '<%:重启中...%>';
+        statusDiv.innerHTML = '<span style="color: blue;"><%:正在重启OpenClash，请稍候...</span></span>';
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '<%=luci.dispatcher.build_url("admin/services/ipv6-tools/api/restart")%>', true);
+
+        xhr.onload = function() {
+            btn.disabled = false;
+            btn.innerHTML = '<%:重启OpenClash%>';
+
+            if (xhr.status === 200) {
+                var response = JSON.parse(xhr.responseText);
+                if (response.success) {
+                    statusDiv.innerHTML = '<span style="color: green;">✓ ' + response.message + '</span>';
+                    setTimeout(refreshStatus, 3000); // 重启需要更长时间
+                } else {
+                    statusDiv.innerHTML = '<span style="color: red;">✗ ' + response.message + '</span>';
+                }
+            } else {
+                statusDiv.innerHTML = '<span style="color: red;"><%:操作失败%></span>';
+            }
+
+            // 5秒后清除状态信息
+            setTimeout(function() {
+                statusDiv.innerHTML = '';
+            }, 5000);
+        };
+
+        xhr.onerror = function() {
+            btn.disabled = false;
+            btn.innerHTML = '<%:重启OpenClash%>';
+            statusDiv.innerHTML = '<span style="color: red;"><%:网络错误%></span>';
+        };
+
+        xhr.send();
+    }
+
+    // 刷新状态
+    function refreshStatus() {
+        // 触发页面上的其他状态显示元素刷新
+        var statusElements = document.querySelectorAll('[id*="status"]');
+        statusElements.forEach(function(element) {
+            var event = new Event('refresh');
+            element.dispatchEvent(event);
+        });
+    }
+
+    // 根据当前状态启用/禁用按钮
+    function updateButtonStates() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '<%=luci.dispatcher.build_url("admin/services/ipv6-tools/api/status")%>', true);
+
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var response = JSON.parse(xhr.responseText);
+                var startBtn = document.getElementById('start-btn');
+                var stopBtn = document.getElementById('stop-btn');
+
+                if (response.status === 'running') {
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                } else {
+                    startBtn.disabled = false;
+                    stopBtn.disabled = true;
+                }
+            }
+        };
+
+        xhr.send();
+    }
+
+    // 页面加载时更新按钮状态
+    window.onload = function() {
+        updateButtonStates();
+        setInterval(updateButtonStates, 5000); // 每5秒更新一次按钮状态
+    };
+</script>

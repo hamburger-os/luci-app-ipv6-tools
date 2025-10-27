@@ -1,0 +1,49 @@
+#!/bin/sh
+#
+# IPv6 Tools UCI defaults
+#
+
+# 添加默认配置（如果不存在）
+uci -q batch <<-EOF >/dev/null
+delete ipv6-tools.@global[-1]
+add ipv6-tools global
+set ipv6-tools.@global[-1].enable='0'
+set ipv6-tools.@global[-1].debug_level='1'
+set ipv6-tools.@global[-1].check_interval='5'
+set ipv6-tools.@global[-1].idle_timeout='300'
+set ipv6-tools.@global[-1].startup_delay='10'
+
+delete ipv6-tools.@openclash[-1]
+add ipv6-tools openclash
+set ipv6-tools.@openclash[-1].enable='1'
+set ipv6-tools.@openclash[-1].check_method='domain'
+set ipv6-tools.@openclash[-1].domain_list='google.com,youtube.com,facebook.com,twitter.com,instagram.com'
+set ipv6-tools.@openclash[-1].ip_list='8.8.8.8,1.1.1.1,208.67.222.222'
+set ipv6-tools.@openclash[-1].start_command='/etc/init.d/openclash restart'
+set ipv6-tools.@openclash[-1].stop_command='/etc/init.d/openclash stop'
+set ipv6-tools.@openclash[-1].status_command='/etc/init.d/openclash status'
+
+delete ipv6-tools.@traffic[-1]
+add ipv6-tools traffic
+set ipv6-tools.@traffic[-1].enable='1'
+set ipv6-tools.@traffic[-1].interface='all'
+set ipv6-tools.@traffic[-1].min_traffic_kb='10'
+set ipv6-tools.@traffic[-1].check_interval='10'
+
+delete ipv6-tools.@log[-1]
+add ipv6-tools log
+set ipv6-tools.@log[-1].enable='1'
+set ipv6-tools.@log[-1].log_file='/var/log/ipv6-tools.log'
+set ipv6-tools.@log[-1].max_size='100'
+set ipv6-tools.@log[-1].log_level='info'
+commit ipv6-tools
+EOF
+
+# 创建日志文件
+touch /var/log/ipv6-tools.log
+chmod 644 /var/log/ipv6-tools.log
+
+# 创建状态文件目录
+mkdir -p /tmp/ipv6-tools
+
+exit 0

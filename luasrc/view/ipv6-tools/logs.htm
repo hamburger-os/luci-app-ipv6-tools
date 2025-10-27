@@ -1,0 +1,178 @@
+<!-- IPv6 Tools Logs Template -->
+<!-- Copyright (C) 2025 -->
+<!-- Licensed under GPL v3 -->
+
+<%+header%>
+
+<h2 name="content"><%:IPv6 Tools - 日志%></h2>
+
+<fieldset class="cbi-section">
+    <legend>系统日志</legend>
+
+    <div class="cbi-section-node">
+        <div class="cbi-value">
+            <div class="cbi-value-field" style="width: 100%">
+                <textarea id="log_content" class="cbi-input-textarea" style="height: 400px; width: 100%; font-family: monospace;" readonly="readonly">
+正在加载日志...
+                </textarea>
+            </div>
+        </div>
+
+        <div class="cbi-value">
+            <div class="cbi-value-field">
+                <input type="button" class="cbi-button cbi-button-apply" value="<%:刷新日志%>" onclick="refreshLogs()" />
+                <input type="button" class="cbi-button cbi-button-neutral" value="<%:清空日志%>" onclick="clearLogs()" />
+                <select id="log_lines" onchange="refreshLogs()">
+                    <option value="50">最近50行</option>
+                    <option value="100">最近100行</option>
+                    <option value="200">最近200行</option>
+                    <option value="500">最近500行</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</fieldset>
+
+<fieldset class="cbi-section">
+    <legend>服务状态</legend>
+
+    <div class="cbi-section-node">
+        <div class="cbi-value">
+            <label class="cbi-value-title">当前状态</label>
+            <div class="cbi-value-field">
+                <span id="service_status" style="font-weight: bold;">检查中...</span>
+                <button class="cbi-button cbi-button-apply" onclick="checkStatus()" style="margin-left: 10px;"><%:刷新状态%></button>
+            </div>
+        </div>
+
+        <div class="cbi-value">
+            <label class="cbi-value-title">快速操作</label>
+            <div class="cbi-value-field">
+                <button class="cbi-button cbi-button-action important" onclick="startService()"><%:启动OpenClash%></button>
+                <button class="cbi-button cbi-button-action" onclick="stopService()" style="margin-left: 10px;"><%:停止OpenClash%></button>
+                <button class="cbi-button cbi-button-neutral" onclick="restartService()" style="margin-left: 10px;"><%:重启服务%></button>
+            </div>
+        </div>
+    </div>
+</fieldset>
+
+<script type="text/javascript">
+    // 刷新日志
+    function refreshLogs() {
+        var lines = document.getElementById('log_lines').value;
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '<%=luci.dispatcher.build_url("admin/services/ipv6-tools/api/status")%>', true);
+
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var response = JSON.parse(xhr.responseText);
+                document.getElementById('service_status').innerHTML =
+                    response.status === 'running' ?
+                    '<span style="color: green;">运行中</span>' :
+                    '<span style="color: red;">已停止</span>';
+            }
+        };
+
+        xhr.send();
+
+        // 获取日志内容（这里需要通过后台API获取）
+        var logXhr = new XMLHttpRequest();
+        logXhr.open('POST', '<%=luci.dispatcher.build_url("admin/services/ipv6-tools")%>/log', true);
+        logXhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        logXhr.send('lines=' + lines);
+
+        logXhr.onload = function() {
+            if (logXhr.status === 200) {
+                document.getElementById('log_content').value = logXhr.responseText;
+            }
+        };
+    }
+
+    // 清空日志
+    function clearLogs() {
+        if (confirm('确定要清空日志吗？')) {
+            document.getElementById('log_content').value = '日志已清空';
+        }
+    }
+
+    // 检查服务状态
+    function checkStatus() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '<%=luci.dispatcher.build_url("admin/services/ipv6-tools/api/status")%>', true);
+
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var response = JSON.parse(xhr.responseText);
+                var statusElement = document.getElementById('service_status');
+                if (response.status === 'running') {
+                    statusElement.innerHTML = '<span style="color: green;">运行中</span>';
+                } else if (response.status === 'stopped') {
+                    statusElement.innerHTML = '<span style="color: red;">已停止</span>';
+                } else {
+                    statusElement.innerHTML = '<span style="color: orange;">未知状态</span>';
+                }
+            }
+        };
+
+        xhr.send();
+    }
+
+    // 启动服务
+    function startService() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '<%=luci.dispatcher.build_url("admin/services/ipv6-tools/api/start")%>', true);
+
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var response = JSON.parse(xhr.responseText);
+                alert(response.message);
+                checkStatus();
+            }
+        };
+
+        xhr.send();
+    }
+
+    // 停止服务
+    function stopService() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '<%=luci.dispatcher.build_url("admin/services/ipv6-tools/api/stop")%>', true);
+
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var response = JSON.parse(xhr.responseText);
+                alert(response.message);
+                checkStatus();
+            }
+        };
+
+        xhr.send();
+    }
+
+    // 重启服务
+    function restartService() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '<%=luci.dispatcher.build_url("admin/services/ipv6-tools/api/restart")%>', true);
+
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var response = JSON.parse(xhr.responseText);
+                alert(response.message);
+                setTimeout(checkStatus, 2000); // 等待2秒后再检查状态
+            }
+        };
+
+        xhr.send();
+    }
+
+    // 页面加载时自动刷新
+    window.onload = function() {
+        refreshLogs();
+        checkStatus();
+    };
+
+    // 定时刷新状态
+    setInterval(checkStatus, 10000); // 每10秒刷新一次状态
+</script>
+
+<%+footer%>

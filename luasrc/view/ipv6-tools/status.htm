@@ -1,0 +1,56 @@
+<!-- IPv6 Tools Status Template -->
+<!-- Copyright (C) 2025 -->
+<!-- Licensed under GPL v3 -->
+
+<%
+local ipv6_tools = require "luci.model.ipv6-tools"
+local status = ipv6_tools.get_service_status()
+%>
+
+<div id="ipv6-tools-status">
+    <% if status == "running" then %>
+        <span style="color: green; font-weight: bold;"><%:运行中%></span>
+        <span style="color: gray; font-size: 0.9em; margin-left: 10px;">
+            (<%=os.date("%Y-%m-%d %H:%M:%S")%>)
+        </span>
+    <% elseif status == "stopped" then %>
+        <span style="color: red; font-weight: bold;"><%:已停止%></span>
+        <span style="color: gray; font-size: 0.9em; margin-left: 10px;">
+            (<%=os.date("%Y-%m-%d %H:%M:%S")%>)
+        </span>
+    <% else %>
+        <span style="color: orange; font-weight: bold;"><%:未知状态%></span>
+        <span style="color: gray; font-size: 0.9em; margin-left: 10px;">
+            (<%=os.date("%Y-%m-%d %H:%M:%S")%>)
+        </span>
+    <% end %>
+</div>
+
+<script type="text/javascript">
+    // 定时刷新状态
+    setInterval(function() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '<%=luci.dispatcher.build_url("admin/services/ipv6-tools/api/status")%>', true);
+
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var response = JSON.parse(xhr.responseText);
+                var statusDiv = document.getElementById('ipv6-tools-status');
+                var timestamp = new Date().toLocaleString();
+
+                if (response.status === 'running') {
+                    statusDiv.innerHTML = '<span style="color: green; font-weight: bold;"><%:运行中%></span>' +
+                        '<span style="color: gray; font-size: 0.9em; margin-left: 10px;">(' + timestamp + ')</span>';
+                } else if (response.status === 'stopped') {
+                    statusDiv.innerHTML = '<span style="color: red; font-weight: bold;"><%:已停止%></span>' +
+                        '<span style="color: gray; font-size: 0.9em; margin-left: 10px;">(' + timestamp + ')</span>';
+                } else {
+                    statusDiv.innerHTML = '<span style="color: orange; font-weight: bold;"><%:未知状态%></span>' +
+                        '<span style="color: gray; font-size: 0.9em; margin-left: 10px;">(' + timestamp + ')</span>';
+                }
+            }
+        };
+
+        xhr.send();
+    }, 5000); // 每5秒刷新一次
+</script>
